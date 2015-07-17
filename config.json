@@ -1,6 +1,7 @@
 {
-	"port" : "4444"
-	"lenses" : {
-		
+	"port" : "4444",
+	"lenses" : 
+	{
+		"C:\\copy" : ["C:\\repo","C:\\repo2"]
 	}
 }
