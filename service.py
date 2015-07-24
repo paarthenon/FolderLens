@@ -29,6 +29,9 @@ class Lens:
 	def add_repo(self, repo):
 		self.repos.append(repo)
 
+	def ensure_folder(self):
+		os.makedirs(self.out_dir, exist_ok=True)
+
 	def write(self):
 		def merge_mappings(dict_list):
 			merged = {}
