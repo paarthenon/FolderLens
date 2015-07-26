@@ -3,6 +3,8 @@ import time
 import json
 import os, sys, signal
 
+from router import Router
+
 class Repo:
 	"""docstring for Repo"""
 	def __init__(self, path):
@@ -70,17 +72,15 @@ class SvcState:
 			self.lenses.append(Lens(lens, repos))
 
 
+router = Router()
+
+@router.register('list')
 def command_list(state, msg):
 	print("Listening lenses and repos")
 	for lens in state.lenses:
 		print("Lens with output dir: %s" % lens.out_dir)
 		for repo in lens.repos:
 			print("  Repo source: %s" % repo.path)
-
-route =	\
-{
-	'list': command_list
-}
 
 def load_config():
 	with open('config.json') as cfg:
@@ -108,7 +108,7 @@ def main():
 		msg = json.loads(msg_str)
 		print("Type: %s " % msg['type'])
 
-		route[msg['type']](state, msg)
+		router.dispatch(msg['type'],state, msg)
 
 		time.sleep(1)
 
