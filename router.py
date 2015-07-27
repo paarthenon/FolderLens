@@ -8,7 +8,5 @@ class Router:
             return lambda :func
         return func_decorator
 
-    # TODO: Just get rid of the *args call and make it return a function
-    # I don't know what's pythonic here
-    def dispatch(self, route_name, *args):
-        return self.routes[route_name](*args)
+    def dispatch(self, route_name):
+        return self.routes[route_name]

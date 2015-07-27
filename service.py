@@ -6,7 +6,6 @@ import os, sys, signal
 from router import Router
 
 class Repo:
-	"""docstring for Repo"""
 	def __init__(self, path):
 		super(Repo, self).__init__()
 		self.path = path
@@ -22,7 +21,6 @@ class Repo:
 
 class Lens:
 	#TODO: track dirty edits
-	"""docstring for Lens"""
 	def __init__(self, out_dir, repos):
 		super(Lens, self).__init__()
 		self.out_dir = out_dir
@@ -82,6 +80,11 @@ def command_list(state, msg):
 		for repo in lens.repos:
 			print("  Repo source: %s" % repo.path)
 
+@router.register('stop')
+def command_stop(signal, frame):
+	print("Thank you, goodbye")
+	sys.exit(0)
+
 def load_config():
 	with open('config.json') as cfg:
 		return json.load(cfg)
@@ -91,10 +94,6 @@ def get_socket(port):
 	socket = context.socket(zmq.PAIR)
 	socket.bind("tcp://*:%s" % port)
 	return socket
-
-def signal_handler(signal, frame):
-	print("Thank you, goodbye")
-	sys.exit(0)
 
 def main():
 	config = load_config()
@@ -108,7 +107,8 @@ def main():
 		msg = json.loads(msg_str)
 		print("Type: %s " % msg['type'])
 
-		router.dispatch(msg['type'],state, msg)
+		function = router.dispatch(msg['type'])
+		function(state, msg)
 
 		time.sleep(1)
 
