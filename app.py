@@ -1,10 +1,3 @@
-import zmq
-import time
-import json
-import os, sys, signal
-
-from router import Router
-
 class Repo:
 	def __init__(self, path):
 		super(Repo, self).__init__()
@@ -19,6 +12,9 @@ class Repo:
 				mapping[relative_path] = source_path
 		return mapping
 
+	def __str__(self):
+		return "  Repo source: %s\n" % repo.path
+
 class Lens:
 	#TODO: track dirty edits
 	def __init__(self, out_dir, repos):
@@ -31,6 +27,12 @@ class Lens:
 
 	def ensure_folder(self):
 		os.makedirs(self.out_dir, exist_ok=True)
+
+	def __str__(self):
+		header = "Lens with output dir: %s\n" % lens.out_dir
+		for repo in self.repos:
+			header = header + repo
+		return header
 
 	def write(self):
 		def merge_mappings(dict_list):
@@ -61,57 +63,24 @@ class Lens:
 
 		write_symlinks(merged)
 
-class SvcState:
-	def __init__(self, cfg):
+class State:
+	def __init__(self, config_path):
+		config = load_config(config_path)
+		self.construct(config)
+
+	def construct(self, config):
 		self.lenses = []
 		lensdefs = cfg['lenses']
 		for lens in lensdefs.keys():
 			repos = [Repo(repo) for repo in lensdefs[lens]]
 			self.lenses.append(Lens(lens, repos))
 
+	@staticmethod
+	def load_config():
+		with open('config.json') as cfg:
+			return json.load(cfg)
 
-router = Router()
-
-@router.register('list')
-def command_list(state, msg):
-	print("Listening lenses and repos")
-	for lens in state.lenses:
-		print("Lens with output dir: %s" % lens.out_dir)
-		for repo in lens.repos:
-			print("  Repo source: %s" % repo.path)
-
-@router.register('stop')
-def command_stop(signal, frame):
-	print("Thank you, goodbye")
-	sys.exit(0)
-
-def load_config():
-	with open('config.json') as cfg:
-		return json.load(cfg)
-
-def get_socket(port):
-	context = zmq.Context()
-	socket = context.socket(zmq.PAIR)
-	socket.bind("tcp://*:%s" % port)
-	return socket
-
-def main():
-	config = load_config()
-	socket = get_socket(config['port'])
-
-	state = SvcState(config)
-
-	while True:
-		msg_str = socket.recv_string()
-		print(msg_str)
-		msg = json.loads(msg_str)
-		print("Type: %s " % msg['type'])
-
-		function = router.dispatch(msg['type'])
-		function(state, msg)
-
-		time.sleep(1)
-
-if __name__ == '__main__':
-	signal.signal(signal.SIGINT, signal_handler)
-	main()
+	def __str__(self):
+		header = "Listening lenses and repos\n"
+		for lens in self.lenses:
+			header = header + lens
