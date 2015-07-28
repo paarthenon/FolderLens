@@ -1,3 +1,9 @@
+class NameCollision(Exception):
+	pass
+
+class PathCollision(Exception):
+	pass
+
 class Repo:
 	def __init__(self, path):
 		super(Repo, self).__init__()
@@ -17,19 +23,22 @@ class Repo:
 
 class Lens:
 	#TODO: track dirty edits
-	def __init__(self, out_dir, repos):
+	def __init__(self, name, path, repos):
 		super(Lens, self).__init__()
-		self.out_dir = out_dir
+		self.name = name
+		self.path = path
 		self.repos = repos
 
 	def add_repo(self, repo):
 		self.repos.append(repo)
+		return self
 
 	def ensure_folder(self):
-		os.makedirs(self.out_dir, exist_ok=True)
+		os.makedirs(self.path, exist_ok=True)
+		return self
 
 	def __str__(self):
-		header = "Lens with output dir: %s\n" % lens.out_dir
+		header = "Lens with output dir: %s\n" % lens.path
 		for repo in self.repos:
 			header = header + repo
 		return header
@@ -53,7 +62,7 @@ class Lens:
 
 		def write_symlinks(dict):
 			for rel_path, source_path in dict.items():
-				dest_path = os.path.join(self.out_dir, rel_path)
+				dest_path = os.path.join(self.path, rel_path)
 				os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 				#take this out, eventually
 				if not os.path.isfile(dest_path):
@@ -63,22 +72,36 @@ class Lens:
 
 		write_symlinks(merged)
 
-class State:
-	def __init__(self, config_path):
-		config = load_config(config_path)
-		self.construct(config)
+class LensRegistry:
+	def __init__(self):
+		self._by_name = {}
+		self._by_path = {}
 
-	def construct(self, config):
-		self.lenses = []
-		lensdefs = cfg['lenses']
-		for lens in lensdefs.keys():
-			repos = [Repo(repo) for repo in lensdefs[lens]]
-			self.lenses.append(Lens(lens, repos))
+	def add_lens_obj(self, lens):
+		if(lens.name in self._by_name):
+			raise NameCollision("Name [%s] already exists in registry" %s name)
+		if(lens.path in self._by_path):
+			raise PathCollision("Path [%s] already exists in registry" %s path)
+		self._by_name[name] = lens
+		self._by_path[path] = lens
+		return self
 
-	@staticmethod
-	def load_config():
-		with open('config.json') as cfg:
-			return json.load(cfg)
+	def add_lens(self, name, path):
+		if(name in self._by_name):
+			raise NameCollision("Name [%s] already exists in registry" %s name)
+		if(path in self._by_path):
+			raise PathCollision("Path [%s] already exists in registry" %s path)
+		lens = Lens(name, path, [])
+		self._by_name[name] = lens
+		self._by_path[path] = lens
+		return lens
+
+	def get_lens(self, string):
+		if(string in self._by_name):
+			return self._by_name[string]
+		if(string in self._by_path):
+			return self._by_path[string]
+		return None
 
 	def __str__(self):
 		header = "Listening lenses and repos\n"

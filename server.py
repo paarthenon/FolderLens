@@ -13,7 +13,7 @@ def command_list(state, msg):
 	print(state)
 
 @router.register('stop')
-def command_stop(msg):
+def command_stop(state, msg):
 	print("Thank you, goodbye")
 	sys.exit(0)
 
@@ -22,6 +22,22 @@ def get_socket(port):
 	socket = context.socket(zmq.PAIR)
 	socket.bind("tcp://*:%s" % port)
 	return socket
+
+def load_config():
+	with open('config.json') as cfg:
+		return json.load(cfg)
+
+def construct(registry, config_path):
+	cfg = load_config(config_path)
+	lensdefs = cfg['lenses']
+	for lens_name in lensdefs.keys():
+		repos = [Repo(repo) for repo in lensdefs[lens_name]['repos']]
+		lens_dir = lensdefs[lens_name]['output']
+		lens = registry.add_lens(lens_name, lens_dir)
+		for repo_dir in lensdefs[lens_name]['repos']:
+			lens.add_repo(Repo(repo_dir))
+			#TODO: fix the inconsistency between being able to add a constructed
+			#repo vs. adding a constructed lens
 
 def main():
 	config = load_config()
