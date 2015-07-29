@@ -19,7 +19,7 @@ class Repo:
 		return mapping
 
 	def __str__(self):
-		return "  Repo source: %s\n" % repo.path
+		return "  Repo source: %s\n" % self.path
 
 class Lens:
 	#TODO: track dirty edits
@@ -38,9 +38,9 @@ class Lens:
 		return self
 
 	def __str__(self):
-		header = "Lens with output dir: %s\n" % lens.path
+		header = "Lens with output dir: %s\n" % self.path
 		for repo in self.repos:
-			header = header + repo
+			header = header + str(repo)
 		return header
 
 	def write(self):
@@ -79,18 +79,18 @@ class LensRegistry:
 
 	def add_lens_obj(self, lens):
 		if(lens.name in self._by_name):
-			raise NameCollision("Name [%s] already exists in registry" %s name)
+			raise NameCollision("Name [%s] already exists in registry" % lens.name)
 		if(lens.path in self._by_path):
-			raise PathCollision("Path [%s] already exists in registry" %s path)
+			raise PathCollision("Path [%s] already exists in registry" % lens.path)
 		self._by_name[name] = lens
 		self._by_path[path] = lens
 		return self
 
 	def add_lens(self, name, path):
 		if(name in self._by_name):
-			raise NameCollision("Name [%s] already exists in registry" %s name)
+			raise NameCollision("Name [%s] already exists in registry" % name)
 		if(path in self._by_path):
-			raise PathCollision("Path [%s] already exists in registry" %s path)
+			raise PathCollision("Path [%s] already exists in registry" % path)
 		lens = Lens(name, path, [])
 		self._by_name[name] = lens
 		self._by_path[path] = lens
@@ -104,6 +104,7 @@ class LensRegistry:
 		return None
 
 	def __str__(self):
-		header = "Listening lenses and repos\n"
-		for lens in self.lenses:
-			header = header + lens
+		string = "Listening lenses and repos\n"
+		for lens in self._by_name.values():
+			string = string + str(lens)
+		return string
